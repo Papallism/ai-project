@@ -72,11 +72,10 @@ string operationEnumToString(Operation performedOperation);
 int main()
 {
     Node* root = new Node();
+    Node* currentNode = new Node();
 
     LinkedList* open = new LinkedList(root);
     LinkedList* closed = new LinkedList();
-
-    Node* currentNode = new Node();
 
     while (!open->isEmpty())
     {
@@ -95,6 +94,7 @@ int main()
         }
     }
 
+    // Traverse the closed list to count the expanded nodes
     int expandedNodes = 0;
     Node* temp = closed->first;
     while (temp != nullptr) {
@@ -103,15 +103,20 @@ int main()
     }
     cout << endl << "Expanded nodes: " << expandedNodes << endl;
 
+    // Backtrack from the goal until the root
     cout << endl << "Jumps as follows:" << endl;
     temp = currentNode;
     vector<string> solutionSteps;
     while (temp->parent != nullptr)
     {
-        solutionSteps.push_back(rockEnumToString(temp->frogThatMovedColor) + to_string(temp->frogThatMovedIndex + 1) + operationEnumToString(temp->performedOperation));
+        // Convert enums and index to string, concatenate, and store in vector
+        solutionSteps.push_back(rockEnumToString(temp->frogThatMovedColor)
+                                + to_string(temp->frogThatMovedIndex + 1)
+                                + operationEnumToString(temp->performedOperation));
 
         temp = temp->parent;
     }
+    // Print the vector in reverse order to show the steps in the correct order
     for (int i = solutionSteps.size() - 1; i >= 0; i--)
     {
         cout << solutionSteps[i] << endl;
