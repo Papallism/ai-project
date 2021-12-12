@@ -77,6 +77,7 @@ int main()
     LinkedList* open = new LinkedList(root);
     LinkedList* closed = new LinkedList();
 
+    // Perform BFS search until open list is empty or goal is found
     while (!open->isEmpty())
     {
         currentNode = open->first;
@@ -94,18 +95,9 @@ int main()
         }
     }
 
-    // Traverse the closed list to count the expanded nodes
-    int expandedNodes = 0;
-    Node* temp = closed->first;
-    while (temp != nullptr) {
-        expandedNodes++;
-        temp = temp->next;
-    }
-    cout << endl << "Expanded nodes: " << expandedNodes << endl;
-
-    // Backtrack from the goal until the root
+    // Backtrack from the goal until the root to get the solution steps
     cout << endl << "Jumps as follows:" << endl;
-    temp = currentNode;
+    Node* temp = currentNode;
     vector<string> solutionSteps;
     while (temp->parent != nullptr)
     {
@@ -121,19 +113,6 @@ int main()
     {
         cout << solutionSteps[i] << endl;
     }
-
-    // TODO: Open and Closed lists in report
-
-    //cout << "\nClosed List:" << endl;
-    //temp = closed->first;
-    //while (temp != nullptr) {
-    //    for (int i = 0; i < NUMBER_OF_ROCKS; i++)
-    //    {
-    //        cout << temp->state[i];
-    //    }
-    //    cout << endl;
-    //    temp = temp->next;
-    //}
 
     return 0;
 }
