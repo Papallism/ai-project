@@ -7,6 +7,7 @@
 */
 
 #include <iostream>
+#include <vector>
 #include <string>
 
 using namespace std;
@@ -32,9 +33,12 @@ struct Node
 	Node* parent;
 	Node* next;
 	Rock state[NUMBER_OF_ROCKS]; // An array of type enum Rock to represent the 7 rocks and what is on each rock
+    Rock frogThatMovedColor;
+    int frogThatMovedIndex;
+    Operation performedOperation;
 
 	Node();
-	Node(Node* parentNode, Rock generatedState[]);
+	Node(Node* parentNode, Rock generatedState[], Rock frogColor, int frogIndex, Operation operation);
 };
 
 // Implementation of a Linked List with pointers using simplified operations according to the problem
@@ -44,7 +48,7 @@ public:
 	void insert(Node* nodeToInsert);
 	void remove();
 	bool isEmpty();
-    bool alreadyExists(Node* nodeToFind);
+    bool alreadyExists(Rock stateArrayToCheck[]);
 
 	LinkedList();
 	LinkedList(Node* rootNode);
@@ -62,7 +66,8 @@ bool isGoal(Node* nodeToCheck);
 int locateEmptyRock(Rock stateArray[]);
 void copyPreviousState(Rock previousStateArray[], Rock newStateArray[]);
 void generateChildren(Node* parentNode, LinkedList* openList, LinkedList* closedList);
-ostream& operator << (ostream& out, const Rock rockState);
+string rockEnumToString(Rock rockState);
+string operationEnumToString(Operation performedOperation);
 
 int main()
 {
@@ -73,17 +78,14 @@ int main()
 
     Node* currentNode = new Node();
 
-    int iterations = 0;
-
     while (!open->isEmpty())
     {
-        iterations++;
         currentNode = open->first;
         open->remove();
 
         if (isGoal(currentNode))
         {
-            cout << "solution found" << endl;
+            cout << "Solution found" << endl;
             break;
         }
         else
@@ -93,30 +95,29 @@ int main()
         }
     }
 
-    for (int i = 0; i < NUMBER_OF_ROCKS; i++)
-    {
-        cout << currentNode->state[i];
-    }
-
     int expandedNodes = 0;
     Node* temp = closed->first;
     while (temp != nullptr) {
         expandedNodes++;
         temp = temp->next;
     }
-    cout << endl << "\nExpanded nodes: " << expandedNodes << endl << "Iterations: " << iterations << endl;
+    cout << endl << "Expanded nodes: " << expandedNodes << endl;
 
-    cout << endl << "Path:\n" << endl;
+    cout << endl << "Jumps as follows:" << endl;
     temp = currentNode;
+    vector<string> solutionSteps;
     while (temp->parent != nullptr)
     {
-        for (int i = 0; i < NUMBER_OF_ROCKS; i++)
-        {
-            cout << temp->state[i];
-        }
+        solutionSteps.push_back(rockEnumToString(temp->frogThatMovedColor) + to_string(temp->frogThatMovedIndex + 1) + operationEnumToString(temp->performedOperation));
+
         temp = temp->parent;
-        cout << endl;
     }
+    for (int i = solutionSteps.size() - 1; i >= 0; i--)
+    {
+        cout << solutionSteps[i] << endl;
+    }
+
+    // TODO: Open and Closed lists in report
 
     //cout << "\nClosed List:" << endl;
     //temp = closed->first;
@@ -132,10 +133,18 @@ int main()
     return 0;
 }
 
-ostream& operator << (ostream& out, const Rock rockState)
+// Function to convert Rock enums to string
+string rockEnumToString(Rock rockState)
 {
-    const string rockEnums[] = { "Brown ", "Empty ", "Green " };
-    return out << rockEnums[rockState];
+    string rockEnums[] = { "Brown frog on place ", "Empty frog on place ", "Green frog on place " };
+    return rockEnums[rockState];
+}
+
+// Function to convert Operation enums to string
+string operationEnumToString(Operation performedOperation)
+{
+    string operationEnums[] = { " moves right", " jumps right", " moves left", " jumps left" };
+    return operationEnums[performedOperation];
 }
 
 // Function to check if a state is the goal state
@@ -190,9 +199,9 @@ void generateChildren(Node* parentNode, LinkedList* openList, LinkedList* closed
         copyPreviousState(parentNode->state, generatedState);
         generatedState[emptyRockIndex] = Brown;
         generatedState[emptyRockIndex - 1] = Empty;
-        Node* generatedNode = new Node(parentNode, generatedState);
-        if (!openList->alreadyExists(generatedNode) && !closedList->alreadyExists(generatedNode))
+        if (!openList->alreadyExists(generatedState) && !closedList->alreadyExists(generatedState))
         {
+            Node* generatedNode = new Node(parentNode, generatedState, Brown, emptyRockIndex - 1, MoveRight);
             openList->insert(generatedNode);
         }
 	}
@@ -202,9 +211,9 @@ void generateChildren(Node* parentNode, LinkedList* openList, LinkedList* closed
         copyPreviousState(parentNode->state, generatedState);
         generatedState[emptyRockIndex] = Brown;
         generatedState[emptyRockIndex - 2] = Empty;
-        Node* generatedNode = new Node(parentNode, generatedState);
-        if (!openList->alreadyExists(generatedNode) && !closedList->alreadyExists(generatedNode))
+        if (!openList->alreadyExists(generatedState) && !closedList->alreadyExists(generatedState))
         {
+            Node* generatedNode = new Node(parentNode, generatedState, Brown, emptyRockIndex - 2, JumpRight);
             openList->insert(generatedNode);
         }
     }
@@ -214,9 +223,9 @@ void generateChildren(Node* parentNode, LinkedList* openList, LinkedList* closed
         copyPreviousState(parentNode->state, generatedState);
         generatedState[emptyRockIndex] = Green;
         generatedState[emptyRockIndex + 1] = Empty;
-        Node* generatedNode = new Node(parentNode, generatedState);
-        if (!openList->alreadyExists(generatedNode) && !closedList->alreadyExists(generatedNode))
+        if (!openList->alreadyExists(generatedState) && !closedList->alreadyExists(generatedState))
         {
+            Node* generatedNode = new Node(parentNode, generatedState, Green, emptyRockIndex + 1, MoveLeft);
             openList->insert(generatedNode);
         }
     }
@@ -226,9 +235,9 @@ void generateChildren(Node* parentNode, LinkedList* openList, LinkedList* closed
         copyPreviousState(parentNode->state, generatedState);
         generatedState[emptyRockIndex] = Green;
         generatedState[emptyRockIndex + 2] = Empty;
-        Node* generatedNode = new Node(parentNode, generatedState);
-        if (!openList->alreadyExists(generatedNode) && !closedList->alreadyExists(generatedNode))
+        if (!openList->alreadyExists(generatedState) && !closedList->alreadyExists(generatedState))
         {
+            Node* generatedNode = new Node(parentNode, generatedState, Green, emptyRockIndex + 2, JumpLeft);
             openList->insert(generatedNode);
         }
     }
@@ -246,7 +255,7 @@ Node::Node()
 }
 
 // Node Constructor for all states except the root, setting a pointer to the parent Node
-Node::Node(Node* parentNode, Rock generatedState[])
+Node::Node(Node* parentNode, Rock generatedState[], Rock frogColor, int frogIndex, Operation operation)
 {
     parent = parentNode;
 	next = nullptr;
@@ -254,6 +263,9 @@ Node::Node(Node* parentNode, Rock generatedState[])
     {
         state[i] = generatedState[i];
     }
+    frogThatMovedColor = frogColor;
+    frogThatMovedIndex = frogIndex;
+    performedOperation = operation;
 }
 
 // Operation to insert a node in the linked list
@@ -295,14 +307,14 @@ bool LinkedList::isEmpty()
 }
 
 // Operation to check if a node already exists in the linked list
-bool LinkedList::alreadyExists(Node* nodeToFind)
+bool LinkedList::alreadyExists(Rock stateArrayToCheck[])
 {
     Node* temp = first;
     int index = 0;
 
     while (temp != nullptr)
     {
-        while (temp->state[index] == nodeToFind->state[index])
+        while (temp->state[index] == stateArrayToCheck[index])
         {
             index++;
             if (index == NUMBER_OF_ROCKS)
